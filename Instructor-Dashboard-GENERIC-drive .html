@@ -477,6 +477,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font
       <button class="btn btn-ghost" id="wiz-back" onclick="wizStep(-1)" style="visibility:hidden">← Back</button>
       <button class="btn btn-accent btn-lg" id="wiz-next" onclick="wizStep(1)">Next →</button>
     </div>
+    <!-- Returning user restore option -->
+    <div style="text-align:center;padding:.75rem 2rem 1.25rem;border-top:1px solid var(--border)">
+      <span style="font-size:.75rem;color:var(--ink3)">Returning user? </span>
+      <button
+        id="wiz-load-drive"
+        onclick="wizLoadFromDrive()"
+        style="background:none;border:none;font-size:.75rem;font-weight:700;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;text-decoration:underline;">
+        ↓ Load from Drive to restore your dashboard
+      </button>
+      <div id="wiz-drive-status" style="font-size:.7rem;color:var(--ink3);margin-top:.3rem;font-family:'DM Mono',monospace;min-height:1rem"></div>
+    </div>
   </div>
 </div>
 
@@ -1485,6 +1496,64 @@ function setDriveStatus(msg, type) {
 function setDriveButtons(disabled) {
   document.getElementById('btn-save-drive').disabled = disabled;
   document.getElementById('btn-load-drive').disabled = disabled;
+}
+
+// ── WIZARD LOAD FROM DRIVE ────────────────────────────────────────────────────
+// Called from inside the setup wizard — restores a saved backup on a fresh device
+// so returning users don't have to redo the wizard
+function wizLoadFromDrive() {
+  if (!isAppsScript()) {
+    document.getElementById('wiz-drive-status').textContent = '⚠ Only works when deployed as a Google Apps Script Web App';
+    return;
+  }
+  const btn = document.getElementById('wiz-load-drive');
+  const status = document.getElementById('wiz-drive-status');
+  btn.disabled = true;
+  btn.textContent = 'Loading…';
+  status.textContent = 'Connecting to Google Drive…';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success) {
+        status.textContent = '✓ Backup found — restoring your dashboard…';
+        restoreSnapshot(result.data);
+
+        // Re-initialize config and state from restored localStorage
+        config = GP('config') || {...DEFAULT_CONFIG};
+        applyAccent(config.accentColor || '#0a7e74', config.accentColor2 || '#0fb8a8');
+        _yearId = LS('active_year') || 'y_default';
+        loadYear(_yearId);
+
+        if (config.isSetup) {
+          // Hide wizard, show dashboard
+          document.getElementById('wizard-overlay').style.display = 'none';
+          initDashboard();
+          setDriveStatus('✓ Dashboard restored from Drive', 'saved');
+          // Update last saved timestamp
+          google.script.run
+            .withSuccessHandler(function(ts) {
+              const el = document.getElementById('drive-last-saved');
+              if (el && ts.success) el.textContent = 'Last saved: ' + ts.timestamp;
+            })
+            .getLastSaved();
+        } else {
+          // Backup exists but isSetup was false — shouldn't happen but handle gracefully
+          status.textContent = '⚠ Backup loaded but setup was incomplete. Please complete the wizard.';
+          btn.disabled = false;
+          btn.textContent = '↓ Load from Drive to restore your dashboard';
+        }
+      } else {
+        status.textContent = '✗ ' + result.message;
+        btn.disabled = false;
+        btn.textContent = '↓ Load from Drive to restore your dashboard';
+      }
+    })
+    .withFailureHandler(function(err) {
+      status.textContent = '✗ Load failed: ' + err.message;
+      btn.disabled = false;
+      btn.textContent = '↓ Load from Drive to restore your dashboard';
+    })
+    .loadFromDrive();
 }
 
 // Collect ALL localStorage keys used by this dashboard into one snapshot object
