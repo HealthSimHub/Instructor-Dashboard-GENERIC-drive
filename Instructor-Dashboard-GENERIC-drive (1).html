@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instructor Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent:  #0a7e74;
+  --accent2: #0fb8a8;
+  --accent3: #ccfbf1;
+  --navy:    #0c1f3f;
+  --navy2:   #162d52;
+  --navy3:   #1e3d6e;
+  --gold:    #c47e1a;
+  --gold2:   #f0be5a;
+  --gold3:   #fef3c7;
+  --p1c:     #1d4ed8; --p1l: #dbeafe;
+  --p2c:     #15803d; --p2l: #dcfce7;
+  --p3c:     #b45309; --p3l: #fef9c3;
+  --p4c:     #7c3aed; --p4l: #ede9fe;
+  --p5c:     #be123c; --p5l: #ffe4e6;
+  --done:    #0f766e; --donel: #ccfbf1;
+  --wip:     #b45309; --wipl:  #fef3c7;
+  --todo:    #475569; --todol: #f1f5f9;
+  --white:   #ffffff;
+  --bg:      #f0f4f8;
+  --surface: #ffffff;
+  --border:  #dde3ec;
+  --ink:     #1e293b;
+  --ink2:    #475569;
+  --ink3:    #94a3b8;
+  --rad:     12px;
+  --sh:      0 1px 8px rgba(12,31,63,.08), 0 4px 20px rgba(12,31,63,.06);
+  --sh2:     0 4px 24px rgba(12,31,63,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:13.5px;line-height:1.5}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#c0cbd8;border-radius:99px}
+
+/* ── SETUP WIZARD ── */
+.wizard-overlay{
+  position:fixed;inset:0;background:rgba(12,31,63,.7);z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.wizard{
+  background:var(--surface);border-radius:20px;width:min(680px,94vw);
+  max-height:92vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.3);
+  animation:popIn .22s ease;
+}
+@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.wiz-header{
+  background:var(--navy);padding:1.75rem 2rem 1.5rem;
+  border-radius:20px 20px 0 0;
+}
+.wiz-logo{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:.3rem}
+.wiz-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#fff;letter-spacing:.03em;line-height:1.1}
+.wiz-sub{font-size:.82rem;color:#94a3b8;margin-top:.4rem}
+.wiz-body{padding:1.75rem 2rem}
+.wiz-step{display:none}
+.wiz-step.active{display:block;animation:fadeSlide .2s ease}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.wiz-step-label{
+  font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:.3rem
+}
+.wiz-step-title{font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:1rem}
+
+.field-label{font-size:.78rem;font-weight:600;color:var(--ink2);margin-bottom:.35rem;display:block}
+.field-label span{font-weight:400;color:var(--ink3)}
+.inp{
+  font-family:'DM Sans',sans-serif;font-size:.85rem;padding:.52rem .8rem;
+  border:1.5px solid var(--border);border-radius:9px;outline:none;
+  color:var(--ink);background:var(--surface);width:100%;transition:border-color .15s;
+}
+.inp:focus{border-color:var(--accent)}
+.inp-row{display:flex;gap:.6rem;margin-bottom:.75rem}
+.inp-row .inp-wrap{flex:1;display:flex;flex-direction:column}
+.inp-wrap{display:flex;flex-direction:column;margin-bottom:.75rem}
+
+/* phase builder */
+.phase-builder{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem}
+.phase-row{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.5rem .75rem;
+}
+.phase-swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.phase-name-inp{
+  font-family:'DM Sans',sans-serif;font-size:.83rem;border:none;background:transparent;
+  outline:none;flex:1;color:var(--ink);font-weight:500;
+}
+.phase-weeks-inp{
+  font-family:'DM Mono',monospace;font-size:.76rem;width:56px;
+  border:1.5px solid var(--border);border-radius:6px;padding:.2rem .4rem;
+  outline:none;text-align:center;color:var(--ink);background:var(--surface);
+  transition:border-color .15s;
+}
+.phase-weeks-inp:focus{border-color:var(--accent)}
+.phase-del{background:none;border:none;font-size:.8rem;cursor:pointer;color:var(--ink3);padding:.1rem .3rem;border-radius:4px}
+.phase-del:hover{color:#dc2626;background:#fee2e2}
+.btn-add-phase{
+  display:flex;align-items:center;gap:.4rem;padding:.4rem .8rem;
+  background:none;border:1.5px dashed var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;
+  color:var(--ink3);cursor:pointer;transition:all .15s;width:fit-content;
+}
+.btn-add-phase:hover{border-color:var(--accent);color:var(--accent)}
+
+/* color picker row */
+.color-picker-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem}
+.color-swatch{
+  width:28px;height:28px;border-radius:50%;cursor:pointer;
+  border:3px solid transparent;transition:all .15s;flex-shrink:0;
+}
+.color-swatch.selected{border-color:var(--navy);transform:scale(1.15)}
+
+/* week count stepper */
+.stepper{display:flex;align-items:center;gap:.75rem}
+.stepper-btn{
+  width:36px;height:36px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--surface);font-size:1.2rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;color:var(--ink2);font-weight:700;
+}
+.stepper-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.stepper-val{
+  font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--navy);
+  min-width:2.5rem;text-align:center;
+}
+.stepper-lbl{font-size:.75rem;color:var(--ink3)}
+
+/* progress dots */
+.wiz-progress{display:flex;gap:.4rem;justify-content:center;padding:.75rem 0 0}
+.wiz-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .2s}
+.wiz-dot.active{background:var(--accent);transform:scale(1.3)}
+.wiz-dot.done{background:var(--accent2)}
+
+/* wiz buttons */
+.wiz-footer{display:flex;justify-content:space-between;align-items:center;padding:1.25rem 2rem;border-top:1px solid var(--border)}
+.btn{padding:.45rem 1.1rem;border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2)}
+.btn-ghost{background:transparent;color:var(--ink3);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-gold:hover{background:var(--gold2);color:var(--navy)}
+.btn-lg{padding:.6rem 1.5rem;font-size:.9rem}
+
+/* ── HEADER ── */
+.hdr{
+  background:var(--navy);padding:.7rem 1.75rem;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:300;box-shadow:0 2px 20px rgba(0,0,0,.35);
+}
+.hdr-left{display:flex;align-items:center;gap:.9rem}
+.hdr-course{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.04em;cursor:pointer}
+.hdr-course:hover{color:var(--accent2)}
+.hdr-tag{font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent2);border:1px solid var(--accent);border-radius:5px;padding:.2rem .55rem}
+.hdr-right{display:flex;align-items:center;gap:.6rem}
+.hdr-cohort{font-size:.72rem;font-weight:600;color:var(--ink3);background:var(--navy2);border-radius:6px;padding:.28rem .65rem;border:1px solid var(--navy3)}
+
+/* year select */
+#year-select{
+  font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;
+  background:var(--navy2);color:#fff;border:1px solid var(--navy3);
+  border-radius:8px;padding:.32rem .7rem;outline:none;cursor:pointer;
+}
+
+/* ── NAV ── */
+.nav-tabs{background:var(--navy2);padding:0 1.75rem;display:flex;border-bottom:2px solid var(--navy3)}
+.ntab{
+  padding:.65rem 1.1rem;font-size:.78rem;font-weight:600;
+  color:var(--ink3);cursor:pointer;border:none;background:transparent;
+  border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;
+}
+.ntab:hover{color:#fff}
+.ntab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:1380px;margin:0 auto;padding:1.4rem 1.75rem}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* ── STATS ── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.25rem}
+.stat{background:var(--surface);border-radius:var(--rad);padding:1rem 1.2rem;box-shadow:var(--sh);display:flex;align-items:center;gap:.85rem}
+.stat-ico{font-size:1.7rem;flex-shrink:0}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1}
+.stat-lbl{font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink2);margin-top:.1rem}
+.stat-bar{height:5px;background:var(--border);border-radius:99px;margin-top:.4rem;overflow:hidden}
+.stat-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s}
+.s-teal .stat-num{color:var(--accent)}
+.s-gold .stat-num{color:var(--gold)}
+.s-blue .stat-num{color:var(--p1c)}
+
+/* ── PACING ── */
+.pace-layout{display:grid;grid-template-columns:1fr 310px;gap:1.1rem;align-items:start}
+.card{background:var(--surface);border-radius:var(--rad);box-shadow:var(--sh);overflow:hidden}
+.card+.card{margin-top:1rem}
+.ch{padding:.65rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.ct{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.06em;color:var(--navy)}
+.cb{padding:1rem 1.1rem}
+
+.pace-col-heads{display:grid;grid-template-columns:46px 90px 1fr 90px 90px 120px;gap:.5rem;padding:.4rem 1rem;background:var(--bg);border-bottom:2px solid var(--border)}
+.pace-col-heads span{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+.week-block{border-bottom:1px solid var(--border)}
+.week-block:last-child{border-bottom:none}
+.week-hdr{display:grid;grid-template-columns:46px 90px 1fr 90px 90px 120px;gap:.5rem;padding:.6rem 1rem;cursor:pointer;align-items:center;transition:background .12s;user-select:none}
+.week-hdr:hover{background:#f7fafd}
+.week-hdr.expanded{background:#f0f8f7}
+.wnum{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;color:var(--ink3);text-align:center}
+.phase-pill{font-size:.62rem;font-weight:700;letter-spacing:.06em;padding:.18rem .55rem;border-radius:4px;text-transform:uppercase;white-space:nowrap}
+.wunit-name{font-weight:600;font-size:.85rem;color:var(--ink)}
+.wunit-sub{font-size:.7rem;color:var(--ink2);font-family:'DM Mono',monospace;margin-top:.08rem}
+.wbadge{font-size:.72rem;font-weight:600;line-height:1.3}
+.sbadge{display:inline-flex;align-items:center;gap:.3rem;font-size:.64rem;font-weight:700;letter-spacing:.05em;padding:.22rem .65rem;border-radius:99px;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap;border:none}
+.sbadge:hover{opacity:.8;transform:scale(.97)}
+.sb-done{background:var(--donel);color:var(--done)}
+.sb-wip{background:var(--wipl);color:var(--wip)}
+.sb-todo{background:var(--todol);color:var(--todo)}
+.expand-arrow{font-size:.7rem;transition:transform .2s}
+.expanded .expand-arrow{transform:rotate(180deg)}
+
+.week-detail{display:none;padding:.75rem 1rem 1rem;background:#f7fafd;border-top:1px solid var(--border);animation:slideDown .18s ease}
+.week-detail.open{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.85rem}
+.ds-title{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:.45rem;display:flex;align-items:center;gap:.35rem}
+.topic-list{list-style:none}
+.topic-list li{font-size:.78rem;color:var(--ink);padding:.22rem 0;border-bottom:1px dashed var(--border);line-height:1.4}
+.topic-list li:last-child{border-bottom:none}
+.link-grid{display:flex;flex-direction:column;gap:.35rem}
+.dlink{display:flex;align-items:center;gap:.45rem;padding:.35rem .6rem;border-radius:8px;font-size:.76rem;font-weight:500;text-decoration:none;border:1px solid var(--border);color:var(--ink);transition:all .15s;background:var(--surface)}
+.dlink:hover{border-color:var(--accent);color:var(--accent);background:var(--accent3)}
+.dlink.empty{color:var(--ink3);cursor:pointer;border-style:dashed;background:transparent}
+.dlink.empty:hover{border-color:var(--accent);color:var(--accent)}
+.week-note-inp{width:100%;font-family:'DM Sans',sans-serif;font-size:.8rem;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:8px;outline:none;resize:none;color:var(--ink);background:var(--surface);transition:border-color .15s}
+.week-note-inp:focus{border-color:var(--accent)}
+
+/* ── PHASE PROGRESS ── */
+.phase-prog{display:flex;flex-direction:column;gap:.65rem}
+.pp-label{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.3rem}
+.pp-label span:first-child{font-weight:600}
+.pp-label span:last-child{color:var(--ink3);font-family:'DM Mono',monospace;font-size:.7rem}
+.pp-bar{height:7px;background:var(--border);border-radius:99px;overflow:hidden}
+.pp-fill{height:100%;border-radius:99px;transition:width .5s}
+
+/* ── QUICK LINKS ── */
+.ql-list{display:flex;flex-direction:column;gap:.4rem}
+.ql-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;border-radius:9px;text-decoration:none;background:var(--bg);border:1px solid var(--border);color:var(--ink);font-size:.82rem;font-weight:500;transition:all .15s;cursor:pointer}
+.ql-item:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+.ql-item .ql-icon{font-size:1rem;width:1.3rem;text-align:center;flex-shrink:0}
+
+/* ── NOTES ── */
+.notes-layout{display:grid;grid-template-columns:1fr 320px;gap:1rem}
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.75rem;align-content:start}
+.note-card{background:var(--surface);border-radius:10px;border:1.5px solid var(--border);padding:.8rem .95rem;box-shadow:var(--sh);position:relative;transition:box-shadow .15s}
+.note-card:hover{box-shadow:var(--sh2)}
+.note-card.n-idea{border-top:3px solid var(--p1c)}
+.note-card.n-refine{border-top:3px solid var(--accent)}
+.note-card.n-todo{border-top:3px solid var(--gold)}
+.note-card.n-done-note{border-top:3px solid var(--ink3);opacity:.65}
+.ntag{font-size:.59rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;margin-bottom:.3rem}
+.ntag.n-idea{color:var(--p1c)}.ntag.n-refine{color:var(--accent)}.ntag.n-todo{color:var(--gold)}.ntag.n-done-note{color:var(--ink3)}
+.note-txt{font-size:.82rem;color:var(--ink);white-space:pre-wrap;line-height:1.55}
+.note-meta{font-size:.62rem;color:var(--ink3);margin-top:.45rem;font-family:'DM Mono',monospace}
+.note-del{position:absolute;top:.45rem;right:.6rem;background:none;border:none;font-size:.8rem;cursor:pointer;color:var(--ink3);opacity:0;transition:opacity .1s}
+.note-card:hover .note-del{opacity:1}
+.note-del:hover{color:#dc2626}
+.note-done-btn{position:absolute;bottom:.5rem;right:.6rem;background:none;border:none;font-size:.7rem;cursor:pointer;color:var(--ink3);opacity:0;transition:opacity .1s}
+.note-card:hover .note-done-btn{opacity:1}
+.filter-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.9rem}
+.filter-chip{padding:.28rem .75rem;border-radius:99px;font-size:.72rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--ink2);transition:all .15s}
+.filter-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.add-note-form{display:flex;flex-direction:column;gap:.55rem}
+.anf-row{display:flex;gap:.5rem}
+.anf-select{font-family:'DM Sans',sans-serif;font-size:.8rem;padding:.48rem .65rem;border:1.5px solid var(--border);border-radius:8px;outline:none;color:var(--ink);background:var(--surface);transition:border-color .15s}
+.anf-select:focus{border-color:var(--accent)}
+.anf-ta{font-family:'DM Sans',sans-serif;font-size:.82rem;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;resize:none;min-height:80px;outline:none;color:var(--ink);background:var(--surface);transition:border-color .15s;width:100%}
+.anf-ta:focus{border-color:var(--accent)}
+
+/* ── ASSETS ── */
+.assets-layout{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.asset-list{display:flex;flex-direction:column;gap:.4rem}
+.asset-row{display:flex;align-items:center;gap:.7rem;padding:.55rem .8rem;border-radius:9px;background:var(--bg);border:1px solid var(--border);transition:all .15s}
+.asset-row:hover{border-color:#c0cbd8}
+.asset-row.a-done{background:var(--donel);border-color:#99f6e4}
+.asset-check{width:18px;height:18px;border-radius:5px;flex-shrink:0;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;background:var(--surface)}
+.asset-check.checked{background:var(--accent);border-color:var(--accent)}
+.asset-check.checked::after{content:'✓';font-size:.65rem;color:#fff;font-weight:700}
+.asset-lbl{font-size:.83rem;flex:1}
+.asset-row.a-done .asset-lbl{color:var(--ink2);text-decoration:line-through}
+.asset-link-btn{font-size:.65rem;color:var(--ink3);background:none;border:none;cursor:pointer;padding:.2rem .4rem;border-radius:4px}
+.asset-link-btn:hover{background:var(--border);color:var(--accent)}
+
+/* ── LINKS LIBRARY ── */
+.lib-layout{display:grid;grid-template-columns:220px 1fr;gap:1.1rem;align-items:start}
+.lib-cats{display:flex;flex-direction:column;gap:.3rem}
+.lib-cat-btn{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;border-radius:9px;border:none;background:transparent;color:var(--ink2);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;width:100%}
+.lib-cat-btn:hover{background:var(--bg)}
+.lib-cat-btn.active{background:var(--navy);color:#fff;font-weight:600}
+.lib-cat-btn .cat-count{margin-left:auto;font-family:'DM Mono',monospace;font-size:.68rem;opacity:.65}
+.cat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.lib-search-bar{display:flex;gap:.6rem;margin-bottom:.9rem;align-items:center}
+.lib-search{flex:1;font-family:'DM Sans',sans-serif;font-size:.83rem;padding:.48rem .85rem;border:1.5px solid var(--border);border-radius:9px;outline:none;color:var(--ink);background:var(--surface);transition:border-color .15s}
+.lib-search:focus{border-color:var(--accent)}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.75rem;align-content:start}
+.lib-card{background:var(--surface);border-radius:11px;border:1.5px solid var(--border);box-shadow:var(--sh);overflow:hidden;transition:box-shadow .15s,border-color .15s;display:flex;flex-direction:column}
+.lib-card:hover{box-shadow:var(--sh2);border-color:#c0cbd8}
+.lib-card-accent{height:4px}
+.lib-card-body{padding:.8rem .95rem;flex:1}
+.lib-card-cat{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:.28rem}
+.lib-card-title{font-weight:600;font-size:.88rem;color:var(--ink);line-height:1.35;margin-bottom:.25rem}
+.lib-card-desc{font-size:.76rem;color:var(--ink2);line-height:1.45}
+.lib-card-foot{padding:.5rem .95rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafbfc}
+.lib-card-url{font-size:.68rem;color:var(--ink3);font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.lib-card-actions{display:flex;gap:.35rem;flex-shrink:0}
+.lib-card-open{display:inline-flex;align-items:center;gap:.3rem;padding:.28rem .65rem;background:var(--accent);color:#fff;border-radius:6px;font-size:.7rem;font-weight:700;text-decoration:none;transition:background .15s}
+.lib-card-open:hover{background:var(--accent2)}
+.lib-card-del{padding:.28rem .5rem;background:none;border:1px solid var(--border);border-radius:6px;font-size:.7rem;cursor:pointer;color:var(--ink3);transition:all .15s}
+.lib-card-del:hover{background:#fee2e2;border-color:#fca5a5;color:#dc2626}
+.lib-cat-add{margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);display:flex;gap:.35rem}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:1.6rem;max-width:440px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:popIn .18s ease}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--navy);margin-bottom:.25rem}
+.modal-sub{font-size:.78rem;color:var(--ink2);margin-bottom:1rem}
+.modal-btns{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.9rem}
+
+/* ── SETTINGS PANEL ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* ── DRIVE SAVE/LOAD ── */
+.drive-bar{
+  display:flex;align-items:center;gap:.5rem;
+  background:var(--navy2);border-bottom:1px solid var(--navy3);
+  padding:.38rem 1.75rem;font-size:.72rem;
+}
+.drive-status{
+  color:var(--ink3);font-size:.68rem;font-family:'DM Mono',monospace;
+  flex:1;
+}
+.drive-status.saved{color:#4ade80}
+.drive-status.error{color:#f87171}
+.drive-status.saving{color:var(--gold2)}
+.btn-drive{
+  display:flex;align-items:center;gap:.35rem;
+  padding:.3rem .75rem;border:none;border-radius:7px;
+  font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-drive-save{background:var(--accent);color:#fff}
+.btn-drive-save:hover{background:var(--accent2)}
+.btn-drive-save:disabled{background:var(--navy3);color:var(--ink3);cursor:not-allowed}
+.btn-drive-load{background:var(--navy3);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.1)}
+.btn-drive-load:hover{background:var(--gold);color:#fff}
+.btn-drive-load:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── PRINT ── */
+@media print{
+  .hdr,.nav-tabs,.no-print{display:none!important}
+  body{background:white;font-size:11px}
+  .wrap{padding:.5rem;max-width:none}
+  .pace-layout{grid-template-columns:1fr}
+  .sidebar-col{display:none}
+  .week-detail{display:block!important}
+  .card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ SETUP WIZARD ═══════════════════════════════════════════════════════════ -->
+<div class="wizard-overlay" id="wizard-overlay">
+  <div class="wizard">
+    <div class="wiz-header">
+      <div class="wiz-logo">Instructor Dashboard</div>
+      <div class="wiz-title">Let's set up your<br>command center</div>
+      <div class="wiz-sub">Takes about 2 minutes. You can always edit everything later in Settings.</div>
+    </div>
+    <div class="wiz-body">
+
+      <!-- STEP 1: Course basics -->
+      <div class="wiz-step active" id="step-1">
+        <div class="wiz-step-label">Step 1 of 4</div>
+        <div class="wiz-step-title">Tell us about your course</div>
+        <div class="inp-wrap">
+          <label class="field-label">Course Name <span>(e.g. Medical Assisting, Health Science 2)</span></label>
+          <input class="inp" id="s-course" placeholder="e.g. Certified Clinical Medical Assistant">
+        </div>
+        <div class="inp-wrap">
+          <label class="field-label">Your Name or Title <span>(shown in the header)</span></label>
+          <input class="inp" id="s-teacher" placeholder="e.g. Ms. Johnson · Room 204">
+        </div>
+        <div class="inp-row">
+          <div class="inp-wrap">
+            <label class="field-label">School Year <span>(e.g. 2025–2026)</span></label>
+            <input class="inp" id="s-year" placeholder="2025–2026">
+          </div>
+          <div class="inp-wrap">
+            <label class="field-label">Semester</label>
+            <select class="inp" id="s-sem">
+              <option value="fall">🍂 Fall (Aug – Dec)</option>
+              <option value="spring">🌸 Spring (Jan – May)</option>
+              <option value="full">📅 Full Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="inp-wrap">
+          <label class="field-label">Dashboard Accent Color</label>
+          <div class="color-picker-row" id="color-picker"></div>
+        </div>
+      </div>
+
+      <!-- STEP 2: Week count -->
+      <div class="wiz-step" id="step-2">
+        <div class="wiz-step-label">Step 2 of 4</div>
+        <div class="wiz-step-title">How many weeks is your course?</div>
+        <div style="display:flex;align-items:center;gap:2rem;margin:1.5rem 0">
+          <div class="stepper">
+            <button class="stepper-btn" onclick="stepWeeks(-1)">−</button>
+            <div>
+              <div class="stepper-val" id="week-count-display">18</div>
+              <div class="stepper-lbl" style="text-align:center">weeks</div>
+            </div>
+            <button class="stepper-btn" onclick="stepWeeks(1)">+</button>
+          </div>
+          <div style="font-size:.82rem;color:var(--ink2);line-height:1.6">
+            Typical course lengths:<br>
+            <strong>9 weeks</strong> — quarter semester<br>
+            <strong>18 weeks</strong> — full semester<br>
+            <strong>36 weeks</strong> — full year<br>
+            <span style="color:var(--ink3)">Or enter any number that fits your schedule.</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem">
+          <span style="font-size:.82rem;color:var(--ink2)">Or type a custom number:</span>
+          <input class="inp" id="week-count-inp" type="number" min="1" max="52" value="18" style="width:80px" oninput="syncWeekCount(this.value)">
+        </div>
+      </div>
+
+      <!-- STEP 3: Phases -->
+      <div class="wiz-step" id="step-3">
+        <div class="wiz-step-label">Step 3 of 4</div>
+        <div class="wiz-step-title">Name your course phases <span style="font-size:.8rem;font-weight:400;color:var(--ink3)">(optional)</span></div>
+        <p style="font-size:.8rem;color:var(--ink2);margin-bottom:1rem;line-height:1.55">
+          Phases help you group weeks visually — like units, quarters, or thematic blocks. You can have 1–5 phases. Each week you create will be assigned to a phase.
+        </p>
+        <div class="phase-builder" id="phase-builder"></div>
+        <button class="btn-add-phase no-print" onclick="addPhaseRow()">+ Add Phase</button>
+      </div>
+
+      <!-- STEP 4: First weeks -->
+      <div class="wiz-step" id="step-4">
+        <div class="wiz-step-label">Step 4 of 4</div>
+        <div class="wiz-step-title">Add your first few units <span style="font-size:.8rem;font-weight:400;color:var(--ink3)">(or skip and add later)</span></div>
+        <p style="font-size:.8rem;color:var(--ink2);margin-bottom:1rem;line-height:1.55">
+          You can add all your weeks now, or jump in and add them one at a time from the dashboard. Either works — the pacing guide is fully editable.
+        </p>
+        <div id="quick-weeks-list" style="display:flex;flex-direction:column;gap:.5rem;max-height:260px;overflow-y:auto"></div>
+        <button class="btn-add-phase no-print" onclick="addQuickWeekRow()" style="margin-top:.5rem">+ Add Unit</button>
+      </div>
+
+    </div>
+    <div class="wiz-progress" id="wiz-progress"></div>
+    <div class="wiz-footer">
+      <button class="btn btn-ghost" id="wiz-back" onclick="wizStep(-1)" style="visibility:hidden">← Back</button>
+      <button class="btn btn-accent btn-lg" id="wiz-next" onclick="wizStep(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════════════════════ -->
+<header class="hdr">
+  <div class="hdr-left">
+    <span class="hdr-course" id="hdr-course" onclick="switchTab('settings')" title="Click to edit settings">—</span>
+    <span class="hdr-tag" id="hdr-teacher">Instructor Dashboard</span>
+  </div>
+  <div class="hdr-right">
+    <select id="year-select" onchange="switchYear(this.value)"></select>
+    <button class="btn btn-ghost no-print" onclick="openNewYear()" style="font-size:.72rem;padding:.32rem .75rem;color:var(--ink3);border:1px solid var(--navy3)">+ New Year</button>
+    <span class="hdr-cohort" id="cohort-label"></span>
+    <button class="btn btn-gold no-print" onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+
+<!-- ═══ DRIVE SAVE/LOAD BAR ════════════════════════════════════════════════ -->
+<div class="drive-bar no-print">
+  <button class="btn-drive btn-drive-save" id="btn-save-drive" onclick="saveToDrive()">
+    ☁ Save to Drive
+  </button>
+  <button class="btn-drive btn-drive-load" id="btn-load-drive" onclick="loadFromDrive()">
+    ↓ Load from Drive
+  </button>
+  <span class="drive-status" id="drive-status">Not saved yet this session</span>
+  <span style="font-size:.65rem;color:var(--ink3);margin-left:.25rem" id="drive-last-saved"></span>
+</div>
+
+<!-- ═══ NAV ═══════════════════════════════════════════════════════════════════ -->
+<nav class="nav-tabs no-print">
+  <button class="ntab active" onclick="switchTab('pacing')">📋 Pacing Guide</button>
+  <button class="ntab" onclick="switchTab('notes')">💡 Notes & Ideas</button>
+  <button class="ntab" onclick="switchTab('assets')">🗂 Asset Tracker</button>
+  <button class="ntab" onclick="switchTab('links')">🔗 Links Library</button>
+  <button class="ntab" onclick="switchTab('settings')">⚙️ Settings</button>
+</nav>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════════════════ -->
+<div class="wrap">
+
+  <!-- STATS -->
+  <div class="stat-row">
+    <div class="stat">
+      <span class="stat-ico">📅</span>
+      <div>
+        <div class="stat-num" id="s-week">—</div>
+        <div class="stat-lbl">Current Week</div>
+        <div class="stat-bar"><div class="stat-fill" id="s-prog" style="width:0"></div></div>
+      </div>
+    </div>
+    <div class="stat s-teal">
+      <span class="stat-ico">✅</span>
+      <div>
+        <div class="stat-num" id="s-done">0</div>
+        <div class="stat-lbl">Weeks Complete</div>
+        <div style="font-size:.68rem;color:var(--ink3);margin-top:.1rem" id="s-done-of">of — weeks</div>
+      </div>
+    </div>
+    <div class="stat s-gold">
+      <span class="stat-ico">🔧</span>
+      <div>
+        <div class="stat-num" id="s-wip">0</div>
+        <div class="stat-lbl">In Progress</div>
+      </div>
+    </div>
+    <div class="stat s-blue">
+      <span class="stat-ico">📝</span>
+      <div>
+        <div class="stat-num" id="s-notes">0</div>
+        <div class="stat-lbl">Notes Saved</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PACING TAB ── -->
+  <div class="tab-panel active" id="tab-pacing">
+    <div class="pace-layout">
+      <div>
+        <div class="card">
+          <div class="ch">
+            <span class="ct" id="pacing-title">Pacing Guide</span>
+            <div style="display:flex;gap:.5rem;align-items:center" class="no-print">
+              <button class="btn btn-accent no-print" onclick="openAddWeek()" style="font-size:.72rem;padding:.3rem .75rem">+ Add Unit</button>
+              <span style="font-size:.7rem;color:var(--ink3)">Click row to expand · Click status to cycle</span>
+            </div>
+          </div>
+          <div class="pace-col-heads">
+            <span>Week</span><span>Phase</span><span>Unit / Topic</span>
+            <span>Badge</span><span>Status</span><span>Resources</span>
+          </div>
+          <div id="weeks-accordion"></div>
+          <div id="empty-pacing" style="padding:2.5rem;text-align:center;color:var(--ink3);font-style:italic;display:none">
+            No units yet. Click <strong>+ Add Unit</strong> above to build your pacing guide.
+          </div>
+        </div>
+      </div>
+
+      <!-- sidebar -->
+      <div class="sidebar-col" style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="ch"><span class="ct">Phase Progress</span></div>
+          <div class="cb">
+            <div class="phase-prog" id="phase-prog-wrap"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">🔗 Quick Links</span></div>
+          <div class="cb">
+            <div class="ql-list" id="ql-list"></div>
+            <div class="no-print" style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.4rem">
+              <div style="display:flex;gap:.4rem">
+                <input class="inp" style="width:58px;flex-shrink:0;font-size:.78rem" id="ql-icon" placeholder="🔗">
+                <input class="inp" style="font-size:.78rem" id="ql-label" placeholder="Link label">
+              </div>
+              <input class="inp" style="font-size:.78rem" id="ql-url" placeholder="https://...">
+              <button class="btn btn-accent" style="width:100%;font-size:.78rem" onclick="addQL()">+ Add Link</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">📌 This Week's Focus</span></div>
+          <div class="cb">
+            <textarea id="weekly-focus" class="week-note-inp" rows="4" placeholder="What are you working on this week?" oninput="saveFocus()" style="width:100%;resize:none"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NOTES TAB ── -->
+  <div class="tab-panel" id="tab-notes">
+    <div class="notes-layout">
+      <div>
+        <div class="filter-row no-print">
+          <button class="filter-chip active" onclick="filterNotes('all')">All</button>
+          <button class="filter-chip" onclick="filterNotes('idea')">💡 Ideas</button>
+          <button class="filter-chip" onclick="filterNotes('refine')">🔧 Refinements</button>
+          <button class="filter-chip" onclick="filterNotes('todo')">☐ To-Do</button>
+          <button class="filter-chip" onclick="filterNotes('done-note')">✓ Done</button>
+        </div>
+        <div class="notes-grid" id="notes-grid"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="ch"><span class="ct">+ New Note</span></div>
+          <div class="cb">
+            <div class="add-note-form">
+              <div class="anf-row">
+                <select class="anf-select" id="anf-tag">
+                  <option value="idea">💡 Idea</option>
+                  <option value="refine">🔧 Refinement</option>
+                  <option value="todo">☐ To-Do</option>
+                </select>
+                <select class="anf-select" id="anf-week"><option value="">General</option></select>
+              </div>
+              <textarea class="anf-ta" id="anf-text" placeholder="Type your note…"></textarea>
+              <div style="display:flex;justify-content:flex-end">
+                <button class="btn btn-accent" onclick="addNote()">Save Note</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ch"><span class="ct">Summary</span></div>
+          <div class="cb" id="note-summary"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ASSETS TAB ── -->
+  <div class="tab-panel" id="tab-assets">
+    <div class="assets-layout">
+      <div>
+        <div class="card">
+          <div class="ch">
+            <span class="ct">✅ Built / Complete</span>
+            <button class="btn btn-accent no-print" style="font-size:.72rem;padding:.3rem .75rem" onclick="openAddAsset('built')">+ Add</button>
+          </div>
+          <div class="cb"><div class="asset-list" id="assets-built"></div></div>
+        </div>
+        <div class="card">
+          <div class="ch">
+            <span class="ct">🔧 To Build</span>
+            <button class="btn btn-accent no-print" style="font-size:.72rem;padding:.3rem .75rem" onclick="openAddAsset('todo')">+ Add</button>
+          </div>
+          <div class="cb"><div class="asset-list" id="assets-todo"></div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="ch"><span class="ct">Build Progress</span></div>
+          <div class="cb" id="build-prog-wrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LINKS TAB ── -->
+  <div class="tab-panel" id="tab-links">
+    <div class="lib-layout">
+      <div>
+        <div class="card">
+          <div class="ch"><span class="ct">Categories</span></div>
+          <div class="cb">
+            <div class="lib-cats" id="lib-cats"></div>
+            <div class="lib-cat-add no-print">
+              <input class="inp" id="new-cat-name" placeholder="New category…" style="font-size:.78rem">
+              <button class="btn btn-accent" style="padding:.38rem .7rem;font-size:.75rem" onclick="addCategory()">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="lib-search-bar no-print">
+          <input class="lib-search" id="lib-search" placeholder="🔍  Search links…" oninput="renderLibrary()">
+          <button class="btn btn-accent no-print" onclick="openAddLink()">+ Add Link</button>
+        </div>
+        <div class="lib-grid" id="lib-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS TAB ── -->
+  <div class="tab-panel" id="tab-settings">
+    <div class="settings-grid">
+      <div class="card">
+        <div class="ch"><span class="ct">⚙️ Course Settings</span></div>
+        <div class="cb" style="display:flex;flex-direction:column;gap:.75rem">
+          <div class="inp-wrap" style="margin:0">
+            <label class="field-label">Course Name</label>
+            <input class="inp" id="set-course" oninput="updateSettings()">
+          </div>
+          <div class="inp-wrap" style="margin:0">
+            <label class="field-label">Teacher / Room</label>
+            <input class="inp" id="set-teacher" oninput="updateSettings()">
+          </div>
+          <div class="inp-wrap" style="margin:0">
+            <label class="field-label">Accent Color</label>
+            <div class="color-picker-row" id="color-picker-settings"></div>
+          </div>
+          <div style="padding:.75rem;background:var(--gold3);border-radius:8px;font-size:.78rem;color:#92400e;border:1px solid #fbbf24">
+            ⚠️ To add/remove weeks or change phases, use the <strong>+ Add Unit</strong> button in the Pacing Guide tab.
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">🎓 School Year Manager</span></div>
+        <div class="cb">
+          <div id="year-manager" style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:1rem"></div>
+          <button class="btn btn-accent" style="width:100%" onclick="openNewYear()">+ New School Year</button>
+          <div style="margin-top:1rem;padding:1rem;background:var(--bg);border-radius:9px;font-size:.78rem;color:var(--ink2);line-height:1.6">
+            <strong>New year resets:</strong> Week statuses, week notes, focus<br>
+            <strong>Carries over:</strong> Links library, assets, categories
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ═══ MODALS ════════════════════════════════════════════════════════════════ -->
+
+<!-- Add Week -->
+<div class="modal-bg" id="modal-addweek">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title" id="aw-title">Add Unit / Week</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
+      <div style="display:flex;gap:.5rem">
+        <div style="display:flex;flex-direction:column;gap:.3rem;width:80px;flex-shrink:0">
+          <label class="field-label" style="margin:0">Week #</label>
+          <input class="inp" id="aw-num" type="number" min="1" placeholder="1">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;flex:1">
+          <label class="field-label" style="margin:0">Phase</label>
+          <select class="inp" id="aw-phase"></select>
+        </div>
+      </div>
+      <div>
+        <label class="field-label">Unit / Topic Name</label>
+        <input class="inp" id="aw-unit" placeholder="e.g. Patient Intake & Vital Signs">
+      </div>
+      <div>
+        <label class="field-label">Subtitle / Reference <span style="font-weight:400;color:var(--ink3)">(optional)</span></label>
+        <input class="inp" id="aw-sub" placeholder="e.g. MOD 3 · Chapter 36/37">
+      </div>
+      <div>
+        <label class="field-label">Badge Name <span style="font-weight:400;color:var(--ink3)">(optional)</span></label>
+        <input class="inp" id="aw-badge" placeholder="e.g. Vitals Pro 💓">
+      </div>
+      <div>
+        <label class="field-label">Resources / Links <span style="font-weight:400;color:var(--ink3)">(one per line, label: url)</span></label>
+        <textarea class="inp" id="aw-resources" rows="3" style="resize:none" placeholder="Slide Deck: https://...&#10;Canva Game: https://...&#10;Study Guide:"></textarea>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeAddWeek()">Cancel</button>
+      <button class="btn btn-accent" onclick="saveAddWeek()">Save Unit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Asset -->
+<div class="modal-bg" id="modal-addasset">
+  <div class="modal">
+    <div class="modal-title">Add Asset</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
+      <input class="inp" id="aa-label" placeholder="Asset name / description">
+      <input class="inp" id="aa-url" placeholder="URL (optional)">
+      <select class="inp" id="aa-section">
+        <option value="todo">To Build</option>
+        <option value="built">Already Built</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-addasset')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveAsset()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Library Link -->
+<div class="modal-bg" id="modal-addlink">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Add to Links Library</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+      <input class="inp" id="al-title" placeholder="Title (e.g. Order of Draw Game)">
+      <input class="inp" id="al-url" placeholder="https://...">
+      <input class="inp" id="al-desc" placeholder="Description or notes (optional)">
+      <div style="display:flex;gap:.5rem">
+        <select class="anf-select" id="al-cat" style="flex:1"></select>
+        <input class="inp" id="al-icon" placeholder="🔗" style="width:64px;flex-shrink:0">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-addlink')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveAddLink()">Save Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Week Link Modal -->
+<div class="modal-bg" id="modal-weeklink">
+  <div class="modal">
+    <div class="modal-title">Add Link</div>
+    <div class="modal-sub" id="wl-sub"></div>
+    <input class="inp" id="wl-url" placeholder="https://...">
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-weeklink')">Cancel</button>
+      <button class="btn btn-accent" onclick="saveWeekLink()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Year -->
+<div class="modal-bg" id="modal-newyear">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">🎓 New School Year</div>
+    <div class="modal-sub">Progress resets. Links, assets, and library carry over.</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.75rem">
+      <input class="inp" id="ny-name" placeholder="e.g. 2026–2027">
+      <div style="display:flex;gap:.5rem">
+        <label style="flex:1;display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem" id="ny-fall-lbl">
+          <input type="radio" name="ny-sem" id="ny-fall" value="fall" checked onchange="nyToggleSem()" style="accent-color:var(--accent)">
+          🍂 Fall &nbsp;<span style="color:var(--ink3);font-size:.72rem">Aug – Dec</span>
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.82rem" id="ny-spring-lbl">
+          <input type="radio" name="ny-sem" id="ny-spring" value="spring" onchange="nyToggleSem()" style="accent-color:var(--accent)">
+          🌸 Spring &nbsp;<span style="color:var(--ink3);font-size:.72rem">Jan – May</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('modal-newyear')">Cancel</button>
+      <button class="btn btn-accent" onclick="createNewYear()">Create →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// STORAGE
+// ─────────────────────────────────────────────────────────────────────────────
+const LS  = k => localStorage.getItem('gd_'+k);
+const SS  = (k,v) => localStorage.setItem('gd_'+k, JSON.stringify(v));
+const GP  = k => { try{ return JSON.parse(LS(k)); }catch(e){ return null; } };
+const LSS = (k,v) => localStorage.setItem('gd_'+k, v);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COLORS
+// ─────────────────────────────────────────────────────────────────────────────
+const PALETTE = [
+  {name:'Teal',    val:'#0a7e74', val2:'#0fb8a8'},
+  {name:'Navy',    val:'#1d4ed8', val2:'#60a5fa'},
+  {name:'Green',   val:'#15803d', val2:'#4ade80'},
+  {name:'Purple',  val:'#7c3aed', val2:'#a78bfa'},
+  {name:'Rose',    val:'#be123c', val2:'#fb7185'},
+  {name:'Orange',  val:'#c2410c', val2:'#fb923c'},
+  {name:'Gold',    val:'#b45309', val2:'#f59e0b'},
+  {name:'Slate',   val:'#334155', val2:'#94a3b8'},
+];
+const CAT_COLORS = ['#1d4ed8','#0a7e74','#b45309','#7c3aed','#be123c','#0369a1','#15803d','#a16207'];
+const PHASE_COLORS = ['#1d4ed8','#15803d','#b45309','#7c3aed','#be123c'];
+
+function applyAccent(hex, hex2) {
+  document.documentElement.style.setProperty('--accent',  hex);
+  document.documentElement.style.setProperty('--accent2', hex2 || hex);
+  document.documentElement.style.setProperty('--accent3', hex+'22');
+}
+
+function renderColorPicker(containerId, selectedVal, onChange) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = PALETTE.map(c =>
+    `<div class="color-swatch${c.val===selectedVal?' selected':''}"
+      style="background:${c.val}"
+      title="${c.name}"
+      onclick="selectColor('${containerId}','${c.val}','${c.val2}')"></div>`
+  ).join('');
+}
+
+function selectColor(containerId, val, val2) {
+  document.querySelectorAll(`#${containerId} .color-swatch`).forEach(s=>s.classList.remove('selected'));
+  event.target.classList.add('selected');
+  applyAccent(val, val2);
+  config.accentColor = val;
+  config.accentColor2 = val2;
+  saveConfig();
+  // sync other picker
+  const other = containerId==='color-picker' ? 'color-picker-settings' : 'color-picker';
+  renderColorPicker(other, val, null);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_CONFIG = {
+  courseName:   '',
+  teacher:      '',
+  accentColor:  '#0a7e74',
+  accentColor2: '#0fb8a8',
+  weekCount:    18,
+  phases: [
+    {id:'p1',name:'Phase 1',color:'#1d4ed8'},
+    {id:'p2',name:'Phase 2',color:'#15803d'},
+    {id:'p3',name:'Phase 3',color:'#b45309'},
+  ],
+  isSetup: false,
+};
+
+let config = GP('config') || {...DEFAULT_CONFIG};
+function saveConfig(){ SS('config', config); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// YEAR SYSTEM
+// ─────────────────────────────────────────────────────────────────────────────
+function getYearList(){ return GP('year_list') || [{id:'y_default',name:'2025–2026',sem:'fall',label:'Fall 2025 · Aug–Dec'}]; }
+function getYearData(id){
+  return GP('year_'+id) || {id, weeks:[], notes:[], focus:'', weeklinks:{}};
+}
+function saveYearData(id,d){ SS('year_'+id,d); }
+
+let _yearId = LS('active_year') || 'y_default';
+
+let state = { weeks:[], notes:[], focus:'', weeklinks:{}, ql:GP('ql')||[], assets_b:GP('assets_b')||[], assets_t:GP('assets_t')||[], lib_cats:null, lib_links:null };
+
+function loadYear(id){
+  _yearId = id;
+  LSS('active_year', id);
+  const d = getYearData(id);
+  state.weeks     = d.weeks     || [];
+  state.notes     = d.notes     || [];
+  state.focus     = d.focus     || '';
+  state.weeklinks = d.weeklinks || {};
+}
+
+function save(){
+  saveYearData(_yearId,{id:_yearId,weeks:state.weeks,notes:state.notes,focus:state.focus,weeklinks:state.weeklinks});
+  SS('ql',       state.ql);
+  SS('assets_b', state.assets_b);
+  SS('assets_t', state.assets_t);
+}
+
+function getWeekState(w){ return state.weeks.find(x=>x.num===w) || {num:w,status:'todo',note:''}; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WIZARD
+// ─────────────────────────────────────────────────────────────────────────────
+let _wizStep = 1;
+const WIZ_TOTAL = 4;
+let _wizPhases = [...(config.phases||DEFAULT_CONFIG.phases)];
+let _wizWeekCount = config.weekCount || 18;
+let _wizQuickWeeks = [];
+
+function wizStep(dir){
+  if(dir===1 && !wizValidate()) return;
+  if(dir===1) wizSaveStep();
+  _wizStep = Math.max(1, Math.min(WIZ_TOTAL, _wizStep + dir));
+  document.querySelectorAll('.wiz-step').forEach((s,i)=>s.classList.toggle('active',i===_wizStep-1));
+  document.getElementById('wiz-back').style.visibility = _wizStep===1?'hidden':'visible';
+  document.getElementById('wiz-next').textContent = _wizStep===WIZ_TOTAL ? '✓ Launch Dashboard →' : 'Next →';
+  renderWizProgress();
+  if(_wizStep===3) renderPhaseBuilder();
+  if(_wizStep===4) renderQuickWeeks();
+}
+
+function wizValidate(){
+  if(_wizStep===1){
+    const c = document.getElementById('s-course').value.trim();
+    if(!c){ document.getElementById('s-course').focus(); return false; }
+  }
+  return true;
+}
+
+function wizSaveStep(){
+  if(_wizStep===1){
+    config.courseName   = document.getElementById('s-course').value.trim();
+    config.teacher      = document.getElementById('s-teacher').value.trim();
+    config.yearName     = document.getElementById('s-year').value.trim() || '2025–2026';
+    config.sem          = document.getElementById('s-sem').value;
+    saveConfig();
+  }
+  if(_wizStep===2){
+    config.weekCount = _wizWeekCount;
+    saveConfig();
+  }
+  if(_wizStep===3){
+    config.phases = _wizPhases.filter(p=>p.name.trim());
+    saveConfig();
+  }
+}
+
+function renderWizProgress(){
+  const el = document.getElementById('wiz-progress');
+  el.innerHTML = Array.from({length:WIZ_TOTAL},(_,i)=>
+    `<div class="wiz-dot${i+1===_wizStep?' active':i+1<_wizStep?' done':''}"></div>`
+  ).join('');
+}
+
+// Phase builder
+function renderPhaseBuilder(){
+  const el = document.getElementById('phase-builder');
+  el.innerHTML = _wizPhases.map((p,i)=>`
+    <div class="phase-row">
+      <span class="phase-swatch" style="background:${p.color}"></span>
+      <input class="phase-name-inp" value="${p.name}" placeholder="Phase name" oninput="_wizPhases[${i}].name=this.value">
+      <span style="font-size:.75rem;color:var(--ink3)">weeks</span>
+      <input class="phase-weeks-inp" type="number" value="${p.weeks||''}" placeholder="?" oninput="_wizPhases[${i}].weeks=+this.value" title="How many weeks in this phase">
+      <button class="phase-del" onclick="delPhase(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addPhaseRow(){
+  const nextColor = PHASE_COLORS[_wizPhases.length % PHASE_COLORS.length];
+  _wizPhases.push({id:'p'+Date.now(),name:'Phase '+(_wizPhases.length+1),color:nextColor,weeks:''});
+  renderPhaseBuilder();
+}
+function delPhase(i){ _wizPhases.splice(i,1); renderPhaseBuilder(); }
+
+// Week stepper
+function stepWeeks(d){
+  _wizWeekCount = Math.max(1,Math.min(52,_wizWeekCount+d));
+  document.getElementById('week-count-display').textContent = _wizWeekCount;
+  document.getElementById('week-count-inp').value = _wizWeekCount;
+}
+function syncWeekCount(v){ _wizWeekCount = Math.max(1,Math.min(52,+v||1)); document.getElementById('week-count-display').textContent=_wizWeekCount; }
+
+// Quick weeks
+function renderQuickWeeks(){
+  const el = document.getElementById('quick-weeks-list');
+  if(!_wizQuickWeeks.length) addQuickWeekRow();
+  el.innerHTML = _wizQuickWeeks.map((w,i)=>`
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <span style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--ink3);width:24px;text-align:center">${i+1}</span>
+      <input class="inp" style="flex:1;font-size:.8rem" value="${w.unit||''}" placeholder="Unit / topic name (e.g. Infection Control)" oninput="_wizQuickWeeks[${i}].unit=this.value">
+      <select class="anf-select" style="width:110px;font-size:.75rem" onchange="_wizQuickWeeks[${i}].phase=this.value">
+        ${config.phases.map(p=>`<option value="${p.id}"${w.phase===p.id?' selected':''}>${p.name}</option>`).join('')}
+      </select>
+      <button class="phase-del" onclick="delQuickWeek(${i})">✕</button>
+    </div>`).join('');
+}
+function addQuickWeekRow(){ _wizQuickWeeks.push({unit:'',phase:config.phases[0]?.id||'p1'}); renderQuickWeeks(); }
+function delQuickWeek(i){ _wizQuickWeeks.splice(i,1); renderQuickWeeks(); }
+
+function launchDashboard(){
+  // Save wizard data
+  wizSaveStep(); // save step 4 (quick weeks)
+
+  // Build initial weeks from quick-weeks
+  const yearId = 'y_'+Date.now();
+  const sem = config.sem||'fall';
+  const semLabel = sem==='fall'?`Fall ${(config.yearName||'2025–2026').split('–')[0]} · Aug–Dec`:`Spring ${(config.yearName||'2025–2026').split('–')[1]||''} · Jan–May`;
+
+  const builtWeeks = _wizQuickWeeks
+    .filter(w=>w.unit.trim())
+    .map((w,i)=>({
+      num: i+1, phase: w.phase||config.phases[0]?.id,
+      unit: w.unit.trim(), sub:'', badge:'', resources:[], status:'todo', note:'',
+    }));
+
+  // Fill remaining weeks as blank if weekCount > quick weeks
+  for(let n=builtWeeks.length+1; n<=config.weekCount; n++){
+    builtWeeks.push({num:n, phase:config.phases[0]?.id, unit:'', sub:'', badge:'', resources:[], status:'todo', note:''});
+  }
+
+  saveYearData(yearId,{id:yearId,weeks:builtWeeks,notes:[],focus:'',weeklinks:{}});
+  SS('year_list',[{id:yearId,name:config.yearName||'2025–2026',sem,label:semLabel}]);
+  config.isSetup = true;
+  saveConfig();
+
+  _yearId = yearId;
+  LSS('active_year',yearId);
+  loadYear(yearId);
+
+  document.getElementById('wizard-overlay').style.display='none';
+  initDashboard();
+}
+
+// Override wiz-next for last step
+document.getElementById('wiz-next').addEventListener('click',function(){
+  if(_wizStep===WIZ_TOTAL){ launchDashboard(); }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────────────────────────
+function switchTab(id){
+  document.querySelectorAll('.ntab').forEach((b,i)=>{
+    const ids=['pacing','notes','assets','links','settings'];
+    b.classList.toggle('active',ids[i]===id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='links') renderLibrary();
+  if(id==='settings') renderSettings();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEADER
+// ─────────────────────────────────────────────────────────────────────────────
+function renderHeader(){
+  document.getElementById('hdr-course').textContent  = config.courseName || 'My Course';
+  document.getElementById('hdr-teacher').textContent = config.teacher    || 'Instructor Dashboard';
+  document.title = (config.courseName||'Instructor') + ' Dashboard';
+}
+
+function renderYearSelector(){
+  const years = getYearList();
+  const sel = document.getElementById('year-select');
+  sel.innerHTML = years.map(y=>`<option value="${y.id}"${y.id===_yearId?' selected':''}>${y.name} · ${y.sem==='fall'?'Fall':'Spring'}</option>`).join('');
+  const active = years.find(y=>y.id===_yearId)||years[0];
+  document.getElementById('cohort-label').textContent = active?.label||'';
+}
+
+function switchYear(id){ loadYear(id); renderYearSelector(); renderPacing(); renderStats(); renderNotes(); document.getElementById('weekly-focus').value=state.focus||''; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderStats(){
+  const total = state.weeks.filter(w=>w.unit).length;
+  const done  = state.weeks.filter(w=>w.status==='done').length;
+  const wip   = state.weeks.filter(w=>w.status==='wip').length;
+  const cur   = Math.min(done+wip+1,total||1);
+  document.getElementById('s-week').textContent  = `Wk ${cur}`;
+  document.getElementById('s-prog').style.width  = total?`${(cur/total)*100}%`:'0%';
+  document.getElementById('s-done').textContent  = done;
+  document.getElementById('s-done-of').textContent = `of ${total} units`;
+  document.getElementById('s-wip').textContent   = wip;
+  document.getElementById('s-notes').textContent = state.notes.length;
+  renderPhaseProgress();
+}
+
+function renderPhaseProgress(){
+  const wrap = document.getElementById('phase-prog-wrap');
+  if(!wrap) return;
+  const phases = config.phases||[];
+  if(!phases.length){ wrap.innerHTML='<div style="font-size:.8rem;color:var(--ink3)">No phases defined.</div>'; return; }
+  wrap.innerHTML = phases.map(ph=>{
+    const phWks = state.weeks.filter(w=>w.phase===ph.id&&w.unit);
+    const d = phWks.filter(w=>w.status==='done').length;
+    const t = phWks.length;
+    return `<div style="margin-bottom:.65rem">
+      <div class="pp-label"><span style="font-weight:600">${ph.name}</span><span style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--ink3)">${d} / ${t}</span></div>
+      <div class="pp-bar"><div class="pp-fill" style="width:${t?Math.round((d/t)*100):0}%;background:${ph.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PACING ACCORDION
+// ─────────────────────────────────────────────────────────────────────────────
+const STATUSES=['todo','wip','done'];
+const SL={todo:'To Build',wip:'In Progress',done:'Complete'};
+const SI={todo:'○',wip:'◑',done:'●'};
+const SC={todo:'sb-todo',wip:'sb-wip',done:'sb-done'};
+
+function renderPacing(){
+  const acc = document.getElementById('weeks-accordion');
+  const empty = document.getElementById('empty-pacing');
+  const weeks = state.weeks.filter(w=>w.unit).sort((a,b)=>a.num-b.num);
+  document.getElementById('pacing-title').textContent = `${config.courseName||'My Course'} — ${weeks.length}-Week Pacing Guide`;
+
+  if(!weeks.length){ acc.innerHTML=''; empty.style.display='block'; renderStats(); return; }
+  empty.style.display='none';
+
+  acc.innerHTML='';
+  weeks.forEach(wk=>{
+    const ph = config.phases?.find(p=>p.id===wk.phase)||{name:'—',color:'#94a3b8'};
+    const ws = getWeekState(wk.num);
+    const wlinks = state.weeklinks[wk.num]||{};
+    const resources = wk.resources||[];
+    const builtCount = resources.filter(r=>wlinks[r.label]||r.url).length;
+
+    const block = document.createElement('div');
+    block.className='week-block';
+    block.innerHTML=`
+      <div class="week-hdr" onclick="toggleWeek(${wk.num})" id="wh-${wk.num}">
+        <div class="wnum">W${String(wk.num).padStart(2,'0')}</div>
+        <div><span class="phase-pill" style="background:${ph.color}22;color:${ph.color}">${ph.name}</span></div>
+        <div>
+          <div class="wunit-name">${escHtml(wk.unit)}</div>
+          ${wk.sub?`<div class="wunit-sub">${escHtml(wk.sub)}</div>`:''}
+        </div>
+        <div style="font-size:.72rem;color:var(--accent);font-weight:600;line-height:1.3">${wk.badge?escHtml(wk.badge):''}</div>
+        <div><button class="sbadge ${SC[ws.status]}" onclick="cycleStatus(event,${wk.num})">${SI[ws.status]} ${SL[ws.status]}</button></div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:.4rem">
+          <span style="font-size:.65rem;color:var(--ink3)">${resources.length?`${builtCount}/${resources.length} links`:''}</span>
+          <span class="expand-arrow">▼</span>
+        </div>
+      </div>
+      <div class="week-detail" id="wd-${wk.num}">
+        <div class="detail-grid">
+          <div>
+            <div class="ds-title">📋 Topics / Key Content</div>
+            ${wk.topics?.length?`<ul class="topic-list">${wk.topics.map(t=>`<li>${escHtml(t)}</li>`).join('')}</ul>`:
+              `<div style="font-size:.78rem;color:var(--ink3);font-style:italic">No topics listed. Edit this unit to add them.</div>`}
+          </div>
+          <div>
+            <div class="ds-title">🔗 Resources & Links</div>
+            <div class="link-grid">
+              ${resources.length ? resources.map(r=>{
+                const url = wlinks[r.label]||r.url||'';
+                return url
+                  ? `<a class="dlink" href="${url}" target="_blank"><span>${r.icon||'🔗'}</span>${escHtml(r.label)}</a>`
+                  : `<span class="dlink empty" onclick="openWeekLink(${wk.num},'${esc(r.label)}')"><span>${r.icon||'🔗'}</span>${escHtml(r.label)}<span style="margin-left:auto;font-size:.6rem">+ url</span></span>`;
+              }).join('') : `<span class="dlink empty" onclick="openWeekLink(${wk.num},'Resource')"><span>🔗</span>Add a link<span style="margin-left:auto;font-size:.6rem">+ url</span></span>`}
+            </div>
+          </div>
+          <div>
+            <div class="ds-title">📝 Notes</div>
+            <textarea class="week-note-inp" rows="5" placeholder="Notes for this unit…"
+              oninput="saveWeekNote(${wk.num},this.value)">${escHtml(ws.note||'')}</textarea>
+            <div style="margin-top:.5rem;display:flex;gap:.4rem">
+              <button class="btn btn-ghost" style="font-size:.7rem;padding:.28rem .65rem" onclick="openEditWeek(${wk.num})">✏️ Edit Unit</button>
+              <button class="btn btn-ghost" style="font-size:.7rem;padding:.28rem .65rem;color:#dc2626" onclick="deleteWeek(${wk.num})">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    acc.appendChild(block);
+  });
+
+  // update week select in notes form
+  const sel = document.getElementById('anf-week');
+  if(sel){
+    sel.innerHTML = `<option value="">General</option>`+weeks.map(w=>`<option value="w${w.num}">Week ${w.num}${w.unit?` · ${w.unit.substring(0,20)}`:''}</option>`).join('');
+  }
+  renderStats();
+}
+
+function toggleWeek(n){ const h=document.getElementById(`wh-${n}`),d=document.getElementById(`wd-${n}`); const o=d.classList.contains('open'); d.classList.toggle('open',!o); h.classList.toggle('expanded',!o); }
+
+function cycleStatus(e,n){
+  e.stopPropagation();
+  const ws=getWeekState(n);
+  const next=STATUSES[(STATUSES.indexOf(ws.status||'todo')+1)%STATUSES.length];
+  const idx=state.weeks.findIndex(x=>x.num===n);
+  if(idx>=0) state.weeks[idx].status=next;
+  save(); renderPacing();
+}
+
+function saveWeekNote(n,v){
+  const idx=state.weeks.findIndex(x=>x.num===n);
+  if(idx>=0) state.weeks[idx].note=v;
+  save();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD / EDIT WEEK MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+let _editWeekNum = null;
+
+function populatePhaseSelect(selId, selectedPhase){
+  const sel=document.getElementById(selId);
+  sel.innerHTML=(config.phases||[]).map(p=>`<option value="${p.id}"${p.id===selectedPhase?' selected':''}>${p.name}</option>`).join('');
+}
+
+function openAddWeek(){
+  _editWeekNum=null;
+  document.getElementById('aw-title').textContent='Add Unit / Week';
+  const next = (state.weeks.filter(w=>w.unit).length||0)+1;
+  document.getElementById('aw-num').value=next;
+  document.getElementById('aw-unit').value='';
+  document.getElementById('aw-sub').value='';
+  document.getElementById('aw-badge').value='';
+  document.getElementById('aw-resources').value='';
+  populatePhaseSelect('aw-phase', config.phases?.[0]?.id);
+  document.getElementById('modal-addweek').classList.add('open');
+  setTimeout(()=>document.getElementById('aw-unit').focus(),60);
+}
+
+function openEditWeek(n){
+  _editWeekNum=n;
+  const wk=state.weeks.find(w=>w.num===n);
+  if(!wk) return;
+  document.getElementById('aw-title').textContent='Edit Unit';
+  document.getElementById('aw-num').value=wk.num;
+  document.getElementById('aw-unit').value=wk.unit||'';
+  document.getElementById('aw-sub').value=wk.sub||'';
+  document.getElementById('aw-badge').value=wk.badge||'';
+  document.getElementById('aw-resources').value=(wk.resources||[]).map(r=>r.url?`${r.label}: ${r.url}`:`${r.label}:`).join('\n');
+  populatePhaseSelect('aw-phase', wk.phase);
+  document.getElementById('modal-addweek').classList.add('open');
+}
+
+function closeAddWeek(){ document.getElementById('modal-addweek').classList.remove('open'); _editWeekNum=null; }
+
+function saveAddWeek(){
+  const num   = parseInt(document.getElementById('aw-num').value)||1;
+  const unit  = document.getElementById('aw-unit').value.trim();
+  if(!unit){ document.getElementById('aw-unit').focus(); return; }
+  const sub   = document.getElementById('aw-sub').value.trim();
+  const badge = document.getElementById('aw-badge').value.trim();
+  const phase = document.getElementById('aw-phase').value;
+  const resRaw= document.getElementById('aw-resources').value.trim();
+  const resources = resRaw ? resRaw.split('\n').filter(Boolean).map(line=>{
+    const ci=line.indexOf(':');
+    const label = ci>0 ? line.slice(0,ci).trim() : line.trim();
+    const url   = ci>0 ? line.slice(ci+1).trim() : '';
+    return {label,url,icon:'🔗'};
+  }) : [];
+
+  if(_editWeekNum!==null){
+    const idx=state.weeks.findIndex(w=>w.num===_editWeekNum);
+    if(idx>=0) state.weeks[idx]={...state.weeks[idx],num,unit,sub,badge,phase,resources};
+  } else {
+    // remove existing blank slot if same num, then add
+    state.weeks=state.weeks.filter(w=>!(w.num===num&&!w.unit));
+    const existing=state.weeks.findIndex(w=>w.num===num);
+    if(existing>=0) state.weeks[existing]={...state.weeks[existing],unit,sub,badge,phase,resources};
+    else state.weeks.push({num,unit,sub,badge,phase,resources,status:'todo',note:''});
+  }
+  save(); closeAddWeek(); renderPacing();
+}
+
+function deleteWeek(n){
+  if(!confirm(`Delete Week ${n}? This can't be undone.`)) return;
+  state.weeks=state.weeks.filter(w=>w.num!==n);
+  save(); renderPacing();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WEEK LINK MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+let _wlCtx=null;
+function openWeekLink(week,label){ _wlCtx={week,label}; document.getElementById('wl-sub').textContent=`Week ${week} — ${label}`; document.getElementById('wl-url').value=(state.weeklinks[week]||{})[label]||''; document.getElementById('modal-weeklink').classList.add('open'); setTimeout(()=>document.getElementById('wl-url').focus(),60); }
+function saveWeekLink(){ if(!_wlCtx) return; const{week,label}=_wlCtx; if(!state.weeklinks[week]) state.weeklinks[week]={}; state.weeklinks[week][label]=document.getElementById('wl-url').value.trim(); save(); closeModal('modal-weeklink'); renderPacing(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTES
+// ─────────────────────────────────────────────────────────────────────────────
+let _noteFilter='all';
+const TAG_LABELS={idea:'💡 Idea',refine:'🔧 Refinement',todo:'☐ To-Do','done-note':'✓ Done'};
+
+function renderNotes(){
+  const grid=document.getElementById('notes-grid');
+  const filtered=_noteFilter==='all'?state.notes:state.notes.filter(n=>n.tag===_noteFilter);
+  if(!filtered.length){ grid.innerHTML=`<div style="grid-column:1/-1;padding:2rem;text-align:center;color:var(--ink3);font-style:italic">${_noteFilter==='all'?'No notes yet.':'No notes with this filter.'}</div>`; }
+  else grid.innerHTML=filtered.slice().reverse().map((n,ri)=>{ const i=state.notes.length-1-ri; return `<div class="note-card n-${n.tag}"><div class="ntag n-${n.tag}">${TAG_LABELS[n.tag]||n.tag}${n.week?` · W${n.week.replace('w','')}`:''}  </div><div class="note-txt">${escHtml(n.text)}</div><div class="note-meta">${n.date}</div><button class="note-del" onclick="deleteNote(${i})">✕</button>${n.tag!=='done-note'?`<button class="note-done-btn" onclick="markNoteDone(${i})">✓</button>`:''}</div>`; }).join('');
+  const sumEl=document.getElementById('note-summary');
+  const cnts={idea:0,refine:0,todo:0,'done-note':0};
+  state.notes.forEach(n=>cnts[n.tag]=(cnts[n.tag]||0)+1);
+  sumEl.innerHTML=Object.entries(TAG_LABELS).map(([k,l])=>`<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.82rem"><span>${l}</span><span style="font-family:'DM Mono',monospace">${cnts[k]||0}</span></div>`).join('')+`<div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.82rem;font-weight:700"><span>Total</span><span>${state.notes.length}</span></div>`;
+  document.getElementById('s-notes').textContent=state.notes.length;
+}
+
+function filterNotes(f){ _noteFilter=f; document.querySelectorAll('.filter-chip').forEach((c,i)=>c.classList.toggle('active',['all','idea','refine','todo','done-note'][i]===f)); renderNotes(); }
+function addNote(){ const text=document.getElementById('anf-text').value.trim(); if(!text) return; state.notes.push({tag:document.getElementById('anf-tag').value,week:document.getElementById('anf-week').value,text,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}); document.getElementById('anf-text').value=''; save(); renderNotes(); }
+function deleteNote(i){ if(!confirm('Delete note?')) return; state.notes.splice(i,1); save(); renderNotes(); }
+function markNoteDone(i){ state.notes[i].tag='done-note'; save(); renderNotes(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSETS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderAssets(){
+  renderAssetList('assets-built',state.assets_b,'b');
+  renderAssetList('assets-todo', state.assets_t,'t');
+  const total=state.assets_b.length+state.assets_t.length;
+  const done=state.assets_b.filter(a=>a.done).length+state.assets_t.filter(a=>a.done).length;
+  const pct=total?Math.round((done/total)*100):0;
+  document.getElementById('build-prog-wrap').innerHTML=`<div style="font-size:.82rem;margin-bottom:.75rem;color:var(--ink2)">${done} of ${total} complete</div><div class="pp-bar" style="height:12px;margin-bottom:1rem"><div class="pp-fill" style="width:${pct}%;height:100%;background:var(--accent)"></div></div><div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--accent)">${pct}%</div>`;
+}
+function renderAssetList(elId,items,sKey){ document.getElementById(elId).innerHTML=items.map((a,i)=>`<div class="asset-row${a.done?' a-done':''}"><div class="asset-check${a.done?' checked':''}" onclick="toggleAsset('${sKey}',${i})"></div><span class="asset-lbl">${escHtml(a.label)}</span>${a.url?`<a href="${a.url}" target="_blank" class="asset-link-btn">↗</a>`:`<button class="asset-link-btn" onclick="promptAssetUrl('${sKey}',${i})">🔗</button>`}</div>`).join('')||'<div style="font-size:.8rem;color:var(--ink3);padding:.5rem">None yet.</div>'; }
+function toggleAsset(s,i){ const a=s==='b'?state.assets_b:state.assets_t; a[i].done=!a[i].done; save(); renderAssets(); }
+function promptAssetUrl(s,i){ const a=s==='b'?state.assets_b:state.assets_t; const url=prompt(`URL for "${a[i].label}":`); if(url===null) return; a[i].url=url.trim(); save(); renderAssets(); }
+function openAddAsset(sec){ document.getElementById('aa-section').value=sec; document.getElementById('modal-addasset').classList.add('open'); setTimeout(()=>document.getElementById('aa-label').focus(),60); }
+function saveAsset(){ const label=document.getElementById('aa-label').value.trim(); if(!label) return; const url=document.getElementById('aa-url').value.trim(); const sec=document.getElementById('aa-section').value; (sec==='built'?state.assets_b:state.assets_t).push({id:'a'+Date.now(),label,url,done:sec==='built'}); document.getElementById('aa-label').value=''; document.getElementById('aa-url').value=''; save(); closeModal('modal-addasset'); renderAssets(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// QUICK LINKS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderQL(){ document.getElementById('ql-list').innerHTML=state.ql.map((l,i)=>{ const tag=l.url?`a href="${l.url}" target="_blank"`:`span onclick="promptQLUrl(${i})"`; return `<${tag} class="ql-item"><span class="ql-icon">${l.icon||'🔗'}</span><span>${escHtml(l.label)}</span>${l.url?`<span style="margin-left:auto;font-size:.65rem;opacity:.5">↗</span>`:`<span style="margin-left:auto;font-size:.63rem;color:var(--ink3);font-style:italic">add url</span>`}</${l.url?'a':'span'}>`;}).join(''); }
+function promptQLUrl(i){ const u=prompt(`URL for "${state.ql[i].label}":`); if(u===null) return; state.ql[i].url=u.trim(); save(); renderQL(); }
+function addQL(){ const label=document.getElementById('ql-label').value.trim(); const url=document.getElementById('ql-url').value.trim(); const icon=document.getElementById('ql-icon').value.trim()||'🔗'; if(!label) return; state.ql.push({icon,label,url}); ['ql-label','ql-url','ql-icon'].forEach(id=>document.getElementById(id).value=''); save(); renderQL(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LINKS LIBRARY
+// ─────────────────────────────────────────────────────────────────────────────
+const DEFAULT_LIB_CATS=[{id:'interactive',name:'Interactive Activities',color:'#1d4ed8'},{id:'videos',name:'Videos & Media',color:'#be123c'},{id:'docs',name:'Documents & Guides',color:'#15803d'},{id:'tools',name:'Tools & Simulations',color:'#0a7e74'},{id:'other',name:'Other',color:'#475569'}];
+
+if(!GP('lib_cats'))  { state.lib_cats  = DEFAULT_LIB_CATS; SS('lib_cats',  state.lib_cats); } else state.lib_cats  = GP('lib_cats');
+if(!GP('lib_links')) { state.lib_links = [];                SS('lib_links', state.lib_links); } else state.lib_links = GP('lib_links');
+
+let _libCat='all';
+function saveLib(){ SS('lib_cats',state.lib_cats); SS('lib_links',state.lib_links); }
+
+function renderCategories(){
+  const el=document.getElementById('lib-cats'); if(!el) return;
+  const all=state.lib_links.length;
+  let html=`<button class="lib-cat-btn${_libCat==='all'?' active':''}" onclick="filterLibCat('all')"><span>🗂</span> All Links <span class="cat-count">${all}</span></button>`;
+  state.lib_cats.forEach(c=>{ const cnt=state.lib_links.filter(l=>l.cat===c.id).length; html+=`<button class="lib-cat-btn${_libCat===c.id?' active':''}" onclick="filterLibCat('${c.id}')"><span class="cat-dot" style="background:${c.color}"></span>${escHtml(c.name)}<span class="cat-count">${cnt}</span></button>`; });
+  el.innerHTML=html;
+  const sel=document.getElementById('al-cat'); if(sel) sel.innerHTML=state.lib_cats.map(c=>`<option value="${c.id}">${escHtml(c.name)}</option>`).join('');
+}
+function filterLibCat(id){ _libCat=id; renderCategories(); renderLibrary(); }
+function addCategory(){ const name=document.getElementById('new-cat-name').value.trim(); if(!name) return; const color=CAT_COLORS[state.lib_cats.length%CAT_COLORS.length]; state.lib_cats.push({id:'c'+Date.now(),name,color}); document.getElementById('new-cat-name').value=''; saveLib(); renderCategories(); renderLibrary(); }
+
+function renderLibrary(){
+  renderCategories();
+  const search=(document.getElementById('lib-search')||{}).value?.toLowerCase()||'';
+  const filtered=state.lib_links.filter(l=>(_libCat==='all'||l.cat===_libCat)&&(!search||(l.title||'').toLowerCase().includes(search)||(l.desc||'').toLowerCase().includes(search)||(l.url||'').toLowerCase().includes(search)));
+  const grid=document.getElementById('lib-grid');
+  if(!filtered.length){ grid.innerHTML=`<div style="grid-column:1/-1;padding:2.5rem;text-align:center;color:var(--ink3);font-style:italic">${search?`No results for "${search}"`:'No links yet. Click + Add Link to get started.'}</div>`; return; }
+  grid.innerHTML=filtered.map(l=>{ const cat=state.lib_cats.find(c=>c.id===l.cat)||{name:'Other',color:'#475569'}; const domain=l.url?(()=>{try{return new URL(l.url).hostname.replace('www.','');}catch(e){return l.url.substring(0,30);}})():''; return `<div class="lib-card"><div class="lib-card-accent" style="background:${cat.color}"></div><div class="lib-card-body"><div class="lib-card-cat">${l.icon||'🔗'}  ${escHtml(cat.name)}</div><div class="lib-card-title">${escHtml(l.title||'')}</div>${l.desc?`<div class="lib-card-desc">${escHtml(l.desc)}</div>`:''}</div><div class="lib-card-foot"><span class="lib-card-url" title="${escHtml(l.url||'')}">${domain||'no url'}</span><div class="lib-card-actions">${l.url?`<a class="lib-card-open" href="${l.url}" target="_blank">Open ↗</a>`:''}<button class="lib-card-del" onclick="deleteLibLink('${l.id}')">✕</button></div></div></div>`; }).join('');
+}
+function deleteLibLink(id){ if(!confirm('Remove this link?')) return; state.lib_links=state.lib_links.filter(l=>l.id!==id); saveLib(); renderLibrary(); }
+function openAddLink(){ renderCategories(); document.getElementById('modal-addlink').classList.add('open'); setTimeout(()=>document.getElementById('al-title').focus(),60); }
+function saveAddLink(){ const title=document.getElementById('al-title').value.trim(); const url=document.getElementById('al-url').value.trim(); if(!title) return; state.lib_links.push({id:'ll'+Date.now(),cat:document.getElementById('al-cat').value,icon:document.getElementById('al-icon').value.trim()||'🔗',title,url,desc:document.getElementById('al-desc').value.trim()}); saveLib(); closeModal('modal-addlink'); renderLibrary(); ['al-title','al-url','al-desc','al-icon'].forEach(id=>document.getElementById(id).value=''); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SETTINGS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('set-course').value  = config.courseName||'';
+  document.getElementById('set-teacher').value = config.teacher||'';
+  renderColorPicker('color-picker-settings', config.accentColor);
+  const ym=document.getElementById('year-manager');
+  const years=getYearList();
+  ym.innerHTML=years.map(y=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.5rem .75rem;border-radius:8px;background:${y.id===_yearId?'var(--accent3)':'var(--bg)'};border:1px solid ${y.id===_yearId?'var(--accent)':'var(--border)'}"><span style="font-size:.82rem;font-weight:${y.id===_yearId?700:400}">${y.name} · ${y.sem==='fall'?'Fall':'Spring'}</span>${y.id===_yearId?`<span style="margin-left:auto;font-size:.65rem;color:var(--accent);font-weight:700">ACTIVE</span>`:`<button class="btn btn-ghost" style="margin-left:auto;font-size:.7rem;padding:.2rem .6rem" onclick="switchYear('${y.id}')">Switch</button>`}</div>`).join('');
+}
+function updateSettings(){ config.courseName=document.getElementById('set-course').value.trim(); config.teacher=document.getElementById('set-teacher').value.trim(); saveConfig(); renderHeader(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW YEAR
+// ─────────────────────────────────────────────────────────────────────────────
+function openNewYear(){ document.getElementById('modal-newyear').classList.add('open'); const years=getYearList(); const last=years[years.length-1]; const parts=(last?.name||'2025–2026').split('–'); const next=parseInt(parts[1]||2026); document.getElementById('ny-name').value=`${next}–${next+1}`; nyToggleSem(); setTimeout(()=>document.getElementById('ny-name').focus(),60); }
+function nyToggleSem(){ const f=document.getElementById('ny-fall').checked; document.getElementById('ny-fall-lbl').style.borderColor=f?'var(--accent)':'var(--border)'; document.getElementById('ny-spring-lbl').style.borderColor=!f?'var(--accent)':'var(--border)'; }
+function createNewYear(){ const name=document.getElementById('ny-name').value.trim(); if(!name) return; const sem=document.getElementById('ny-fall').checked?'fall':'spring'; const semLabel=sem==='fall'?`Fall ${name.split('–')[0]} · Aug–Dec`:`Spring ${name.split('–')[1]||name} · Jan–May`; const id='y'+Date.now(); saveYearData(id,{id,weeks:state.weeks.map(w=>({...w,status:'todo',note:''})),notes:[],focus:'',weeklinks:{}}); const years=getYearList(); years.push({id,name,sem,label:semLabel}); SS('year_list',years); closeModal('modal-newyear'); switchYear(id); renderYearSelector(); state.notes.push({tag:'idea',week:'',text:`New school year: ${name} ${sem==='fall'?'Fall':'Spring'} started. Progress reset. Links and assets carried over.`,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}); save(); renderNotes(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FOCUS
+// ─────────────────────────────────────────────────────────────────────────────
+function saveFocus(){ state.focus=document.getElementById('weekly-focus').value; save(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return (s||'').replace(/'/g,"\\'"); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open')); } });
+document.addEventListener('click',e=>{ if(e.target.classList.contains('modal-bg')) e.target.classList.remove('open'); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOOGLE DRIVE SAVE / LOAD
+// These functions call the Apps Script backend (Code.gs)
+// They only work when the dashboard is deployed as a Google Apps Script Web App
+// When running as a plain HTML file they show a helpful message instead
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isAppsScript() {
+  return typeof google !== 'undefined' && google.script && google.script.run;
+}
+
+function setDriveStatus(msg, type) {
+  const el = document.getElementById('drive-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'drive-status' + (type ? ' ' + type : '');
+}
+
+function setDriveButtons(disabled) {
+  document.getElementById('btn-save-drive').disabled = disabled;
+  document.getElementById('btn-load-drive').disabled = disabled;
+}
+
+// Collect ALL localStorage keys used by this dashboard into one snapshot object
+function buildSnapshot() {
+  const snapshot = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('gd_')) {
+      snapshot[key] = localStorage.getItem(key);
+    }
+  }
+  return JSON.stringify(snapshot);
+}
+
+// Restore ALL keys from a snapshot object back into localStorage
+function restoreSnapshot(jsonString) {
+  const snapshot = JSON.parse(jsonString);
+  // Clear existing dashboard keys first
+  const existingKeys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('gd_')) existingKeys.push(key);
+  }
+  existingKeys.forEach(k => localStorage.removeItem(k));
+  // Restore from snapshot
+  Object.entries(snapshot).forEach(([k, v]) => localStorage.setItem(k, v));
+}
+
+function saveToDrive() {
+  if (!isAppsScript()) {
+    setDriveStatus('⚠ Drive save only works when deployed as a Google Apps Script Web App', 'error');
+    return;
+  }
+  setDriveStatus('Saving…', 'saving');
+  setDriveButtons(true);
+
+  const snapshot = buildSnapshot();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      setDriveButtons(false);
+      if (result.success) {
+        setDriveStatus('✓ ' + result.message, 'saved');
+        // Update last saved timestamp
+        google.script.run
+          .withSuccessHandler(function(ts) {
+            const el = document.getElementById('drive-last-saved');
+            if (el && ts.success) el.textContent = 'Last saved: ' + ts.timestamp;
+          })
+          .getLastSaved();
+      } else {
+        setDriveStatus('✗ ' + result.message, 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      setDriveButtons(false);
+      setDriveStatus('✗ Save failed: ' + err.message, 'error');
+    })
+    .saveToDrive(snapshot);
+}
+
+function loadFromDrive() {
+  if (!isAppsScript()) {
+    setDriveStatus('⚠ Drive load only works when deployed as a Google Apps Script Web App', 'error');
+    return;
+  }
+  if (!confirm('Load from Drive? This will replace your current session data with your last saved backup. Any unsaved changes will be lost.')) return;
+
+  setDriveStatus('Loading from Drive…', 'saving');
+  setDriveButtons(true);
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      setDriveButtons(false);
+      if (result.success) {
+        restoreSnapshot(result.data);
+        setDriveStatus('✓ Loaded from Drive — reloading dashboard…', 'saved');
+        // Reload config and re-render everything
+        config = GP('config') || {...DEFAULT_CONFIG};
+        applyAccent(config.accentColor || '#0a7e74', config.accentColor2 || '#0fb8a8');
+        _yearId = LS('active_year') || 'y_default';
+        loadYear(_yearId);
+
+        if (config.isSetup) {
+          document.getElementById('wizard-overlay').style.display = 'none';
+          initDashboard();
+        }
+        // Update last saved timestamp
+        google.script.run
+          .withSuccessHandler(function(ts) {
+            const el = document.getElementById('drive-last-saved');
+            if (el && ts.success) el.textContent = 'Last saved: ' + ts.timestamp;
+          })
+          .getLastSaved();
+        setTimeout(() => setDriveStatus('✓ Dashboard restored from Drive', 'saved'), 1500);
+      } else {
+        setDriveStatus('✗ ' + result.message, 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      setDriveButtons(false);
+      setDriveStatus('✗ Load failed: ' + err.message, 'error');
+    })
+    .loadFromDrive();
+}
+
+// Check last saved timestamp on load
+window.addEventListener('load', function() {
+  if (isAppsScript()) {
+    google.script.run
+      .withSuccessHandler(function(ts) {
+        const el = document.getElementById('drive-last-saved');
+        if (el && ts.success) {
+          el.textContent = 'Last saved: ' + ts.timestamp;
+          setDriveStatus('Ready — click Save to back up your data', '');
+        }
+      })
+      .getLastSaved();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+function initDashboard(){
+  applyAccent(config.accentColor||'#0a7e74', config.accentColor2||'#0fb8a8');
+  renderHeader();
+  renderYearSelector();
+  renderPacing();
+  renderStats();
+  renderNotes();
+  renderAssets();
+  renderQL();
+  renderCategories();
+  document.getElementById('weekly-focus').value=state.focus||'';
+  renderColorPicker('color-picker',config.accentColor||'#0a7e74');
+}
+
+// Show wizard on first run, otherwise launch directly
+if(!config.isSetup){
+  // Init wizard UI
+  renderWizProgress();
+  renderColorPicker('color-picker','#0a7e74');
+  document.getElementById('s-year').value='2025–2026';
+  loadYear(_yearId);
+} else {
+  document.getElementById('wizard-overlay').style.display='none';
+  loadYear(_yearId);
+  initDashboard();
+}
+</script>
+</body>
+</html>
